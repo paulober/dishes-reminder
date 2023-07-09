@@ -15,8 +15,25 @@ struct DetailEditView: View {
         Form {
             Section(header: Text("Gericht Informationen")) {
                 TextField("Name", text: $dish.name)
+                
+                Button(action: {
+                    dish.ingredients.append("Zutat")
+                }) {
+                    Text("Weitere Zutat hinzufuegen")
+                }
+                
+                List {
+                    ForEach(dish.ingredients.indices, id: \.self) { index in
+                        EditableRow(text: $dish.ingredients[index])
+                    }
+                    .onDelete(perform: deleteIngridient)
+                }
             }
         }
+    }
+    
+    func deleteIngridient(at offset: IndexSet) {
+        dish.ingredients.remove(atOffsets: offset)
     }
 }
 

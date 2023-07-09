@@ -27,15 +27,45 @@ class DishesStore: ObservableObject {
             .appendingPathComponent("dishes.data")
     }
     
+    private static func importedFileURL() -> URL? {
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.paulober.dishes-reminder.transfer")?.appendingPathComponent("imported.dishes.data")
+    }
+    
     func load() async throws {
         let task = Task<[Dish], Error> {
             let fileURL = try Self.fileURL()
             
+            // check if shared file has been imported by extension
+            if let importedFileURL = Self.importedFileURL() {
+                
+                if FileManager.default.fileExists(atPath: importedFileURL.path(percentEncoded: false)) {
+                    do {
+                        // Check if the file exists at the destination path
+                        if FileManager.default.fileExists(atPath: fileURL.path) {
+                            // Remove the existing file
+                            try FileManager.default.removeItem(at: fileURL)
+                        }
+                        
+                        try FileManager.default.copyItem(at: importedFileURL, to: fileURL)
+                        try FileManager.default.removeItem(at: importedFileURL)
+                    } catch {
+                        print("Unable to copy imported file into integrated container: \(error.localizedDescription)")
+                    }
+                }
+            }
+            
+            // if file does not exist init with empty dishes array
+            if !FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false)) {
+                FileManager.default.createFile(atPath: fileURL.path(percentEncoded: false), contents: "[]".data(using: .utf8))
+            }
+            
+            // load dishes from file
             guard let data = try? Data(contentsOf: fileURL) else {
                 return []
             }
-            
-            let loadedDishes = try JSONDecoder().decode([Dish].self, from: data)
+            print(String(data: data, encoding: .utf8) ?? "")
+            // decode dishes
+            let loadedDishes: [Dish] = try JSONDecoder().decode([Dish].self, from: data)
             
             return loadedDishes
         }

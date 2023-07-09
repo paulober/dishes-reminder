@@ -35,6 +35,11 @@ struct DetailView: View {
                 }
                 .accessibilityElement(children: .combine)
             }
+            Section(header: Text("Zutaten")) {
+                ForEach(dish.ingredients, id: \.self) { ingr in
+                    Text(ingr)
+                }
+            }
         }
         .navigationTitle("Gericht")
         .toolbar {
